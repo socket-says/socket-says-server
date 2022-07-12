@@ -70,16 +70,11 @@ app.listen(dbPORT, () => console.log(`Listening on PORT ${dbPORT}`));
 
 
 const { Server } = require('socket.io');
-require('dotenv').config();
 const PORT = process.env.PORT || 3002;
 const chalk = require('chalk');
 const server = new Server(PORT);
-const { displayMain } = require('./handleLogin');
-const readline = require('readline');
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
-});
+require('dotenv').config();
+// const { displayMain } = require('./handleLogin');
 
 console.log(chalk.red('red hello world'));
 console.log(chalk.cyan('cyan hello world'));
