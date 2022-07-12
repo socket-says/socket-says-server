@@ -18,12 +18,14 @@
 
 
 //---------------DB--------------------
+require('dotenv').config();
 const express = require('express');
 const app = express();
 app.use(express.json());
 const mongoose = require('mongoose');
 mongoose.connect(process.env.DB_URL);
 const PlayerData = require('./dbModel');
+const dbPORT = process.env.PORT || 3001;
 
 const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'Connection error'));
@@ -37,13 +39,13 @@ app.post('/playerData', postPlayerData);
 
 async function getPlayerData(req, res, next) {
   try {
-    let allPlayers = await PlayerData.readAll();
+    let allPlayers = await PlayerData.find();
     res.status(200).send(allPlayers);
   } catch (e) {
     console.error(e);
     res.status(500).send('server error');
   }
-};
+}
 
 async function postPlayerData(req, res, next) {
   try {
@@ -53,7 +55,7 @@ async function postPlayerData(req, res, next) {
   } catch (err) {
     next(err);
   }
-};
+}
 
 app.get('*', (req, res) => {
   res.status(404).send('Not available');
@@ -63,7 +65,7 @@ app.use((error, req, res, next) => {
   res.status(500).send(error.message);
 });
 
-// app.listen(PORT, () => console.log(`Listening on PORT ${PORT}`));
+app.listen(dbPORT, () => console.log(`Listening on PORT ${dbPORT}`));
 //---------------DB--------------------
 
 

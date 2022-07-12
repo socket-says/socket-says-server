@@ -13,9 +13,9 @@ const newPlayer = new mongoose.Schema({
     req: true,
   },
   HighScore: {
-    type: Array, // is array sufficient to handle multiple high scores from same user?
+    type: Number,
     req: false,
-  }
+  },
 });
 
 const playerModel = mongoose.model('player', newPlayer);
