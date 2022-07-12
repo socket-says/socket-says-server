@@ -37,7 +37,7 @@ app.post('/playerData', postPlayerData);
 
 async function getPlayerData(req, res, next) {
   try {
-   let allPlayers = await PlayerData.readAll();
+    let allPlayers = await PlayerData.readAll();
     res.status(200).send(allPlayers);
   } catch (e) {
     console.error(e);
@@ -50,7 +50,7 @@ async function postPlayerData(req, res, next) {
     let player = req.body;
     let response = await PlayerData.create(player);
     res.status(200).send(response);
-  } catch(err) {
+  } catch (err) {
     next(err);
   }
 };
@@ -63,21 +63,16 @@ app.use((error, req, res, next) => {
   res.status(500).send(error.message);
 });
 
-app.listen(PORT, () => console.log(`Listening on PORT ${PORT}`));
+// app.listen(PORT, () => console.log(`Listening on PORT ${PORT}`));
 //---------------DB--------------------
 
 
 const { Server } = require('socket.io');
-require('dotenv').config();
 const PORT = process.env.PORT || 3002;
 const chalk = require('chalk');
 const server = new Server(PORT);
-const { displayMain } = require('./handleLogin');
-const readline = require('readline');
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
-});
+require('dotenv').config();
+// const { displayMain } = require('./handleLogin');
 
 console.log(chalk.red('red hello world'));
 console.log(chalk.cyan('cyan hello world'));
@@ -87,14 +82,14 @@ console.log(chalk.green('green hello world'));
 
 server.on('connection', (socket) => {
   console.log('Socket connected to Event Server', socket.id);
-  
+
   socket.on('JOIN', (room) => {
     console.log('joined the room');
     socket.join(room);
   });
-  
+
   socket.emit('LOG_IN');
-  
+
   socket.on('LOGGED_IN', (payload) => {
     socket.emit('START', payload);
   });
@@ -103,7 +98,7 @@ server.on('connection', (socket) => {
     console.log('server received correct');
     socket.emit('NEXT_SEQUENCE', payload);
   });
-  
+
   socket.on('INCORRECT', (payload) => {
     socket.emit('LOST', payload);
   });
@@ -154,4 +149,4 @@ server.on('connection', (socket) => {
 // });
 // -----------------------testing-----------------------------
 
-app.listen(PORT, () => console.log(`Listening on PORT ${PORT}`));
+// app.listen(PORT, () => console.log(`Listening on PORT ${PORT}`));
