@@ -66,7 +66,6 @@
 // app.listen(PORT, () => console.log(`Listening on PORT ${PORT}`));
 //---------------DB--------------------
 
-
 const { Server } = require('socket.io');
 const PORT = process.env.PORT || 3002;
 const chalk = require('chalk');
@@ -74,87 +73,38 @@ const server = new Server(PORT);
 require('dotenv').config();
 // const { displayMain } = require('./handleLogin');
 
-console.log(chalk.red('red hello world'));
-console.log(chalk.cyan('cyan hello world'));
-console.log(chalk.yellow('yellow hello world'));
-console.log(chalk.green('green hello world'));
+const socketSays = server.of('/socket-says');
 
-
-server.on('connection', (socket) => {
+socketSays.on('connection', (socket) => {
   console.log('Socket connected to Event Server', socket.id);
 
   socket.on('JOIN', (room) => {
     console.log('joined the room');
     socket.join(room);
-    socket.emit('LOG_IN');
+    socketSays.emit('LOG_IN');
   });
 
-
   socket.on('LOGGED_IN', (payload) => {
-    socket.emit('MAIN', payload);
+    socketSays.emit('MAIN', payload);
   });
 
   socket.on('PLAY_GAME', (payload) => {
-    socket.emit('START', payload);
+    socketSays.emit('START', payload);
   });
-
-  socket.on('VIEW_HIGH_SCORES', (payload) => {
-    socket.emit('DISPLAY_HIGH_SCORES', payload);
-  });
-
+  
   socket.on('CORRECT', (payload) => {
     console.log('server received correct');
-    socket.emit('NEXT_SEQUENCE', payload);
+    socketSays.emit('NEXT_SEQUENCE', payload);
   });
 
   socket.on('INCORRECT', (payload) => {
-    socket.emit('LOST', payload);
+    socketSays.emit('LOST', payload);
+  });
+
+  socket.on('VIEW_HIGH_SCORES', (payload) => {
+    socketSays.emit('DISPLAY_HIGH_SCORES', payload);
   });
 
 });
-
-
-// rl.question('What is your name ? ', function (name) {
-//   rl.question('Where do you live ? ', function (country) {
-//     console.log(`${name}, is a citizen of ${country}`);
-//     rl.close();
-//   });
-// });
-
-// rl.on('close', function () {
-//   console.log('\nBYE BYE !!!');
-//   process.exit(0);
-// });
-
-
-// on player reaching win criteria, display win message
-
-
-// ---------------------testing---------------------------
-// const { Server } = require('socket.io');
-// require('dotenv').config();
-// const PORT = process.env.PORT || 3002;
-// const server = new Server(PORT);
-
-// const socketsays = server.of('/socketsays');
-
-// socketsays.on('connection', socket => {
-//   console.log('Socket connection to Event Server', socket.id);
-
-//   socket.on('JOIN', room => {
-//     console.log('Joined the room');
-//     socket.join(room);
-//   });
-// });
-
-// server.on('connection', socket => {
-//   console.log('Socket connection to Event Server', socket.id);
-
-//   socket.on('JOIN', room => {
-//     console.log('Joined the room');
-//     socket.join(room);
-//   });
-// });
-// -----------------------testing-----------------------------
 
 // app.listen(PORT, () => console.log(`Listening on PORT ${PORT}`));
