@@ -7,12 +7,13 @@ const newPlayer = new mongoose.Schema({
   Username: {
     type: String,
     req: true,
+    unique: true,
   },
   Password: {
     type: String,
     req: true,
   },
-  HighScore: {
+  Highscore: {
     type: Number,
     req: false,
   },
