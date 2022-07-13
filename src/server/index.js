@@ -88,7 +88,7 @@ const socketSays = server.of('/socket-says');
 
 socketSays.on('connection', (socket) => {
   console.log('Socket connected to Event Server', socket.id);
-
+  // let currentPlayer = 'guest';
   socket.on('JOIN', (room) => {
     console.log('joined the room');
     socket.join(room);
@@ -102,16 +102,19 @@ socketSays.on('connection', (socket) => {
   socket.on('CHECK_DB', async (payload) => {
     console.log('server received check db');
     let username = payload.username;
-    console.log(username);
     try {
       let player = await PlayerData.findOne({ Username: username });
-      console.log('player:', player);
-    } catch (payload) {
-      console.log(payload);
-      let newPlayer = await PlayerData.create({ payload });
-      console.log('new player created', newPlayer);
-    }
-    socketSays.emit('CHECKED_DB');
+    //   if (player != undefined) {
+    //     currentPlayer = player;
+    //   } else if (player === undefined) {
+    //     console.log('Username does not exist, create your account by inputting a password');
+    //     let newPlayer = await PlayerData.create({ payload });
+    //     console.log('New player created', newPlayer);
+    //   }
+    // } catch (e) {
+    //   console.log(e.message);
+    //   socketSays.emit('CHECKED_DB');
+    // }
   });
 
   // app.get('/playerData', async function getPlayerData(req, res, next) {
