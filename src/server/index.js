@@ -88,57 +88,39 @@ const socketSays = server.of('/socket-says');
 
 socketSays.on('connection', (socket) => {
   console.log('Socket connected to Event Server', socket.id);
-  // let currentPlayer = 'guest';
-  socket.on('JOIN', (room) => {
-    console.log('joined the room');
-    socket.join(room);
-    socketSays.emit('LOG_IN');
+  let currentPlayer = 'guest';
+  socketSays.emit('LOG_IN');
+
+  socket.on('CHECK_USERNAME', async (payload) => {
+    console.log('server received check db');
+    let { Username } = payload.user;
+    try {
+      let player = await PlayerData.findOne({ Username });
+      console.log('player: ', player);
+      if (player !== null) {
+        currentPlayer = player;
+        socketSays.emit('PLAYER_EXISTS', payload);
+      } else if (player === null) {
+        socketSays.emit('NEW_PLAYER', payload);
+      }
+    } catch (e) {
+      console.log(e.message);
+    }
   });
 
-  socket.on('LOGGED_IN', (payload) => {
+  socket.on('CREATE', async (payload) => {
+    let { Username, Password, Highscore } = payload.user;
+    let newPlayer = await PlayerData.create({ Username, Password, Highscore });
+    console.log('newPlayer: ', newPlayer);
+    socketSays.emit('CREATED_NEW', payload);
+  });
+
+  socket.on('AUTHENTICATED', (payload) => {
+    console.log('joined the room');
+    socket.join(payload.user.Username);
+    console.log('authenticated payload', payload);
     socketSays.emit('MAIN', payload);
   });
-
-  socket.on('CHECK_DB', async (payload) => {
-    console.log('server received check db');
-    let username = payload.username;
-    try {
-      let player = await PlayerData.findOne({ Username: username });
-    //   if (player != undefined) {
-    //     currentPlayer = player;
-    //   } else if (player === undefined) {
-    //     console.log('Username does not exist, create your account by inputting a password');
-    //     let newPlayer = await PlayerData.create({ payload });
-    //     console.log('New player created', newPlayer);
-    //   }
-    // } catch (e) {
-    //   console.log(e.message);
-    //   socketSays.emit('CHECKED_DB');
-    // }
-  });
-
-  // app.get('/playerData', async function getPlayerData(req, res, next) {
-  //   let id = payload.username;
-  //   let player;
-  //   try {
-  //     player = await PlayerData.findById(id);
-  //     console.log('got player by id');
-  //     res.status(200).send(player);
-  //   } catch (e) {
-  //     console.error(e);
-  //     res.status(500).send('server error');
-  //   }
-  //   if (!player) {
-  //     player = await PlayerData.create(
-  //       {
-  //         Username: payload.username,
-  //         Password: payload.password,
-  //         Highscore: 0,
-  //       });
-  //     player.Password = await bcrypt.hash(player.Password, 10);
-  //     let response = await PlayerData.create(player);
-  //     res.status(200).send(response);
-  //   }
 
   socket.on('PLAY_GAME', (payload) => {
     socketSays.emit('START', payload);
@@ -155,6 +137,10 @@ socketSays.on('connection', (socket) => {
 
   socket.on('VIEW_HIGH_SCORES', (payload) => {
     socketSays.emit('DISPLAY_HIGH_SCORES', payload);
+  });
+
+  socket.on('RETURN_TO_MAIN', (payload) => {
+    socketSays.emit('MAIN', payload);
   });
 
 });
