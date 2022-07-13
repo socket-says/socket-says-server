@@ -89,11 +89,6 @@ const socketSays = server.of('/socket-says');
 socketSays.on('connection', (socket) => {
   console.log('Socket connected to Event Server', socket.id);
   // let currentPlayer = 'guest';
-  socket.on('JOIN', (room) => {
-    console.log('joined the room');
-    socket.join(room);
-    socketSays.emit('LOG_IN');
-  });
 
   socket.on('LOGGED_IN', (payload) => {
     socketSays.emit('MAIN', payload);
@@ -104,57 +99,52 @@ socketSays.on('connection', (socket) => {
     let username = payload.username;
     try {
       let player = await PlayerData.findOne({ Username: username });
-    //   if (player != undefined) {
-    //     currentPlayer = player;
-    //   } else if (player === undefined) {
-    //     console.log('Username does not exist, create your account by inputting a password');
-    //     let newPlayer = await PlayerData.create({ payload });
-    //     console.log('New player created', newPlayer);
-    //   }
-    // } catch (e) {
-    //   console.log(e.message);
-    //   socketSays.emit('CHECKED_DB');
-    // }
+      //   if (player != undefined) {
+      //     currentPlayer = player;
+      //   } else if (player === undefined) {
+      //     console.log('Username does not exist, create your account by inputting a password');
+      //     let newPlayer = await PlayerData.create({ payload });
+      //     console.log('New player created', newPlayer);
+      //   }
+      // } catch (e) {
+      //   console.log(e.message);
+      //   socketSays.emit('CHECKED_DB');
+      // }
+    });
+
+  socket.on('JOIN', (payload) => {
+    // takes in payload, defines player-specific room, joins the socket to that room, emits MAIN with player-specific payload:
+    let clientRoom = payload.username;
+    console.log(`${clientRoom} joined the ${clientRoom} room`);
+    socket.join(clientRoom);
+    socketSays.to(clientRoom).emit('MAIN', payload);
   });
 
-  // app.get('/playerData', async function getPlayerData(req, res, next) {
-  //   let id = payload.username;
-  //   let player;
-  //   try {
-  //     player = await PlayerData.findById(id);
-  //     console.log('got player by id');
-  //     res.status(200).send(player);
-  //   } catch (e) {
-  //     console.error(e);
-  //     res.status(500).send('server error');
-  //   }
-  //   if (!player) {
-  //     player = await PlayerData.create(
-  //       {
-  //         Username: payload.username,
-  //         Password: payload.password,
-  //         Highscore: 0,
-  //       });
-  //     player.Password = await bcrypt.hash(player.Password, 10);
-  //     let response = await PlayerData.create(player);
-  //     res.status(200).send(response);
-  //   }
+  socket.on('RETURN_TO_MAIN', (payload) => {
+    socketSays.to(clientRoom).emit('MAIN', payload);
+  })
 
   socket.on('PLAY_GAME', (payload) => {
-    socketSays.emit('START', payload);
+    // takes in player-specific payload
+    // emits START to that player's room, with player-specific payload
+    socketSays.to(clientRoom).emit('START', payload);
+  });
+
+  socket.on('VIEW_HIGH_SCORES', (payload) => {
+    socketSays.to(clientRoom).emit('DISPLAY_HIGH_SCORES', payload);
   });
 
   socket.on('CORRECT', (payload) => {
-    console.log('server received correct');
+    // takes in player-specific payload
+    // emits NEXT_SEQUENCE to that player's room, with player-specific payload
+    // console.log('server received correct');
     socketSays.emit('NEXT_SEQUENCE', payload);
   });
 
   socket.on('INCORRECT', (payload) => {
+    // takes in player-specific payload
+    // emits NEXT_SEQUENCE to that player's room, with player-specific payload
     socketSays.emit('LOST', payload);
-  });
-
-  socket.on('VIEW_HIGH_SCORES', (payload) => {
-    socketSays.emit('DISPLAY_HIGH_SCORES', payload);
   });
 
 });
