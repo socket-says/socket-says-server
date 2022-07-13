@@ -1,23 +1,7 @@
 'use strict';
 
-// on client joining server, send prompt for username and password
-
-// on client submitting username/pass
-// if user exists in db, current user is that user
-// else, create new user in db (getbyID, if doesn't exist, do POST route)
-
-// on client selecting 'view high scores', display high scores
-
-// on client selecting 'start game', send first sequence
-
-// on client submitting sequence guess, check for correct match
-// if match, re-publish sequence with one character added to it
-// if no match, display lose message
-
-// on player reaching win criteria, display win message
-
-
 //---------------DB--------------------
+
 // const express = require('express');
 // const app = express();
 // app.use(express.json());
@@ -64,6 +48,7 @@
 // });
 
 // app.listen(PORT, () => console.log(`Listening on PORT ${PORT}`));
+
 //---------------DB--------------------
 
 const { Server } = require('socket.io');
