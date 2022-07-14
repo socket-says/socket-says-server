@@ -7,6 +7,7 @@ const express = require('express');
 const app = express();
 app.use(express.json());
 const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
 mongoose.connect(process.env.DB_URL);
 const PlayerData = require('./dbModel');
 const DBPORT = process.env.DBPORT || 3004;
