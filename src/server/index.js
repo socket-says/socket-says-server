@@ -7,6 +7,7 @@ const express = require('express');
 const app = express();
 app.use(express.json());
 const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
 mongoose.connect(process.env.DB_URL);
 const PlayerData = require('./dbModel');
 const DBPORT = process.env.DBPORT || 3004;
@@ -53,6 +54,19 @@ socketSays.on('connection', (socket) => {
         socketSays.emit('PLAYER_EXISTS', payload);
       } else if (player === null) {
         socketSays.emit('NEW_PLAYER', payload);
+      }
+    } catch (e) {
+      console.log(e.message);
+    }
+  });
+
+  socket.on('CHECK_PASSWORD', async (payload) => {
+    let { Username } = payload.user;
+    try {
+      let foundUser = await PlayerData.findOne({ Username });
+      let valid = await bcrypt.compare(payload.user.Password, foundUser.Password);
+      if (valid) {
+        socketSays.emit('HANDOFF', payload);
       }
     } catch (e) {
       console.log(e.message);
