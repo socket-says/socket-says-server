@@ -3,7 +3,6 @@
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
-// const newPlayer = new mongoose.Schema({
 const newPlayer = new Schema({
   Username: {
     type: String,
