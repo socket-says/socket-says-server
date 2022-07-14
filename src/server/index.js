@@ -46,11 +46,9 @@ socketSays.on('connection', (socket) => {
   socketSays.emit('LOG_IN');
 
   socket.on('CHECK_USERNAME', async (payload) => {
-    console.log('server received check db');
     let { Username } = payload.user;
     try {
       let player = await PlayerData.findOne({ Username });
-      console.log('player: ', player);
       if (player !== null) {
         socketSays.emit('PLAYER_EXISTS', payload);
       } else if (player === null) {
@@ -64,14 +62,12 @@ socketSays.on('connection', (socket) => {
   socket.on('CREATE', async (payload) => {
     let { Username, Password, Highscore } = payload.user;
     let newPlayer = await PlayerData.create({ Username, Password, Highscore });
-    console.log('newPlayer: ', newPlayer);
     socketSays.emit('CREATED_NEW', payload);
   });
 
   socket.on('AUTHENTICATED', (payload) => {
     console.log('joined the room');
     socket.join(payload.user.Username);
-    console.log('authenticated payload', payload);
     socketSays.emit('MAIN', payload);
   });
 
@@ -80,7 +76,6 @@ socketSays.on('connection', (socket) => {
   });
 
   socket.on('CORRECT', (payload) => {
-    console.log('server received correct');
     socketSays.emit('NEXT_SEQUENCE', payload);
   });
 
