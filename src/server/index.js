@@ -59,6 +59,19 @@ socketSays.on('connection', (socket) => {
     }
   });
 
+  socket.on('CHECK_PASSWORD', async (payload) => {
+    let { Username } = payload.user;
+    try {
+      let foundUser = await PlayerData.findOne({ Username });
+      let valid = await bcrypt.compare(payload.user.Password, foundUser.Password);
+      if (valid) {
+        socketSays.emit('HANDOFF', payload);
+      }
+    } catch (e) {
+      console.log(e.message);
+    }
+  });
+
   socket.on('CREATE', async (payload) => {
     let { Username, Password, Highscore } = payload.user;
     let newPlayer = await PlayerData.create({ Username, Password, Highscore });
