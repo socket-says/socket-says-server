@@ -7,6 +7,7 @@ const express = require('express');
 const app = express();
 app.use(express.json());
 const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
 mongoose.connect(process.env.DB_URL);
 const PlayerData = require('./dbModel');
 const DBPORT = process.env.DBPORT || 3004;
@@ -59,36 +60,49 @@ socketSays.on('connection', (socket) => {
     }
   });
 
+  socket.on('CHECK_PASSWORD', async (payload) => {
+    let { Username } = payload.user;
+    try {
+      let foundUser = await PlayerData.findOne({ Username });
+      let valid = await bcrypt.compare(payload.user.Password, foundUser.Password);
+      if (valid) {
+        socketSays.emit('HANDOFF', payload);
+      }
+    } catch (e) {
+      console.log(e.message);
+    }
+  });
+
   socket.on('CREATE', async (payload) => {
     let { Username, Password, Highscore } = payload.user;
-    let newPlayer = await PlayerData.create({ Username, Password, Highscore });
+    await PlayerData.create({ Username, Password, Highscore });
     socketSays.emit('CREATED_NEW', payload);
   });
 
   socket.on('AUTHENTICATED', (payload) => {
-    console.log('joined the room');
+    console.log(`${payload.user.Username} joined the ${payload.user.Username} room`);
     socket.join(payload.user.Username);
-    socketSays.emit('MAIN', payload);
-  });
-
-  socket.on('PLAY_GAME', (payload) => {
-    socketSays.emit('START', payload);
-  });
-
-  socket.on('CORRECT', (payload) => {
-    socketSays.emit('NEXT_SEQUENCE', payload);
-  });
-
-  socket.on('INCORRECT', (payload) => {
-    socketSays.emit('LOST', payload);
-  });
-
-  socket.on('VIEW_HIGH_SCORES', (payload) => {
-    socketSays.emit('DISPLAY_HIGH_SCORES', payload);
+    socketSays.to(payload.user.Username).emit('MAIN', payload);
   });
 
   socket.on('RETURN_TO_MAIN', (payload) => {
-    socketSays.emit('MAIN', payload);
+    socketSays.to(payload.user.Username).emit('MAIN', payload);
+  });
+
+  socket.on('PLAY_GAME', (payload) => {
+    socketSays.to(payload.user.Username).emit('START', payload);
+  });
+
+  socket.on('VIEW_HIGH_SCORES', (payload) => {
+    socketSays.to(payload.user.Username).emit('DISPLAY_HIGH_SCORES', payload);
+  });
+
+  socket.on('CORRECT', (payload) => {
+    socketSays.to(payload.user.Username).emit('NEXT_SEQUENCE', payload);
+  });
+  socket.on('INCORRECT', (payload) => {
+    socketSays.to(payload.user.Username).emit('LOST', payload);
   });
 
 });
+
