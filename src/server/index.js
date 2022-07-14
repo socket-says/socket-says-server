@@ -92,3 +92,5 @@ socketSays.on('connection', (socket) => {
   });
 
 });
+
+module.exports = { Server: socketSays }
