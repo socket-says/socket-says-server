@@ -7,15 +7,16 @@ const newPlayer = new mongoose.Schema({
   Username: {
     type: String,
     req: true,
+    unique: true,
   },
   Password: {
     type: String,
     req: true,
   },
-  HighScore: {
-    type: Array, // is array sufficient to handle multiple high scores from same user?
+  Highscore: {
+    type: Number,
     req: false,
-  }
+  },
 });
 
 const playerModel = mongoose.model('player', newPlayer);
