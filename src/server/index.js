@@ -3,15 +3,12 @@
 //---------------DB--------------------
 require('dotenv').config();
 const express = require('express');
-// const cors = require('cors');
 const app = express();
-// app.use(cors());
 app.use(express.json());
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 mongoose.connect(process.env.DB_URL);
 const PlayerData = require('./dbModel');
-// const authenticatePlayer = require('../auth/basicAuth');
 const DBPORT = process.env.DBPORT || 3004;
 
 const db = mongoose.connection;
@@ -92,11 +89,9 @@ socketSays.on('connection', (socket) => {
   socketSays.emit('LOG_IN');
 
   socket.on('CHECK_USERNAME', async (payload) => {
-    console.log('server received check db');
     let { Username } = payload.user;
     try {
       let player = await PlayerData.findOne({ Username });
-      console.log('player: ', player);
       if (player !== null) {
         currentPlayer = player;
         socketSays.emit('PLAYER_EXISTS', payload);
@@ -108,17 +103,30 @@ socketSays.on('connection', (socket) => {
     }
   });
 
+  socket.on('CHECK_PASSWORD', async (payload) => {
+    let { Username } = payload.user;
+    try {
+      let foundUser = await PlayerData.findOne({ Username });
+      let valid = await bcrypt.compare(payload.user.Password, foundUser.Password);
+      if (valid) {
+        socketSays.emit('HANDOFF', payload);
+      }
+    } catch (e) {
+      console.log(e.message);
+    }
+  });
+
   socket.on('CREATE', async (payload) => {
     let { Username, Password, Highscore } = payload.user;
     let newPlayer = await PlayerData.create({ Username, Password, Highscore });
-    console.log('newPlayer: ', newPlayer);
+    // console.log('newPlayer: ', newPlayer);
     socketSays.emit('CREATED_NEW', payload);
   });
 
   socket.on('AUTHENTICATED', (payload) => {
     console.log('joined the room');
     socket.join(payload.user.Username);
-    console.log('authenticated payload', payload);
+    // console.log('authenticated payload', payload);
     socketSays.emit('MAIN', payload);
   });
 
