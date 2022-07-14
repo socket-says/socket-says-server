@@ -1,104 +1,55 @@
 'use strict';
 
 //---------------DB--------------------
-// require('dotenv').config();
-// const express = require('express');
-// // const cors = require('cors');
-// const app = express();
-// // app.use(cors());
-// app.use(express.json());
-// const mongoose = require('mongoose');
-// const bcrypt = require('bcrypt');
-// mongoose.connect(process.env.DB_URL);
-// const PlayerData = require('./dbModel');
-// // const authenticatePlayer = require('../auth/basicAuth');
-// const DBPORT = process.env.DBPORT || 3004;
 
-// const db = mongoose.connection;
-// db.on('error', console.error.bind(console, 'Connection error'));
-// db.once('open', function () {
-//   console.log('Mongoose is connected');
-// });
+require('dotenv').config();
+const express = require('express');
+const app = express();
+app.use(express.json());
+const mongoose = require('mongoose');
+mongoose.connect(process.env.DB_URL);
+const PlayerData = require('./dbModel');
+const DBPORT = process.env.DBPORT || 3004;
 
-// //Routes
-// app.get('/playerData', getPlayerData);
-// app.post('/playerData', postPlayerData);
-// // app.post('/basicAuth', authenticatePlayer);
+const db = mongoose.connection;
+db.on('error', console.error.bind(console, 'Connection error'));
+db.once('open', function () {
+  console.log('Mongoose is connected');
+});
 
-// async function getPlayerData(req, res, next) {
-//   try {
-//     let allPlayers = await PlayerData.find();
-//     res.status(200).send(allPlayers);
-//   } catch (e) {
-//     console.error(e);
-//     res.status(500).send('server error');
-//   }
-// }
+app.get('/', (req, res) => {
+  console.log('Welcome to the \'Socket-says\' server');
+});
 
-// async function postPlayerData(req, res, next) {
-//   try {
-//     // whenever username/password is provided, must READ all players in database, to see if username is new or existing
+app.get('*', (req, res) => {
+  res.status(404).send('Not available');
+});
 
-//     let { Username, Password, Highscore } = req.body;
-//     let player = {
-//       Username: Username,
-//       Password: Password,
-//       Highscore: Highscore,
-//     };
-//     let playerData = await PlayerData.create(player);
-//     console.log(player, playerData);
-//     //allPlayers.forEach(async element => {
-//     // if (element.Username === username) {
-//     //   // if username is existing, compare the password, if password is bad, re-prompt for username and password
-//     // } else { // if username is new, hash the password and POST the player
-//     // let player = {
-//     //   Username: username,
-//     //   Password: password,
-//     //   Highscore: null,
-//     // };
-//     // player.Password = await bcrypt.hash(player.Password, 10);
-//     // let response = await PlayerData.create(player);
-//     res.status(200).send(playerData);
-//     //   }
-//     // });
-//     // console.log(allPlayers);
-//   } catch (err) {
-//     next(err);
-//   }
-// }
+app.use((error, req, res, next) => {
+  res.status(500).send(error.message);
+});
 
-// app.get('*', (req, res) => {
-//   res.status(404).send('Not available');
-// });
+app.listen(DBPORT, () => console.log(`Listening on PORT ${DBPORT}`));
 
-// app.use((error, req, res, next) => {
-//   res.status(500).send(error.message);
-// });
-
-// app.listen(DBPORT, () => console.log(`Listening on PORT ${DBPORT}`));
 //---------------DB--------------------
 
+//-------------Socket Server ---------------
 
 const { Server } = require('socket.io');
 const PORT = process.env.PORT || 3002;
-const chalk = require('chalk');
 const server = new Server(PORT);
 
 const socketSays = server.of('/socket-says');
 
 socketSays.on('connection', (socket) => {
   console.log('Socket connected to Event Server', socket.id);
-  let currentPlayer = 'guest';
   socketSays.emit('LOG_IN');
 
   socket.on('CHECK_USERNAME', async (payload) => {
-    console.log('server received check db');
     let { Username } = payload.user;
     try {
       let player = await PlayerData.findOne({ Username });
-      console.log('player: ', player);
       if (player !== null) {
-        currentPlayer = player;
         socketSays.emit('PLAYER_EXISTS', payload);
       } else if (player === null) {
         socketSays.emit('NEW_PLAYER', payload);
@@ -111,12 +62,14 @@ socketSays.on('connection', (socket) => {
   socket.on('CREATE', async (payload) => {
     let { Username, Password, Highscore } = payload.user;
     let newPlayer = await PlayerData.create({ Username, Password, Highscore });
-    console.log('newPlayer: ', newPlayer);
     socketSays.emit('CREATED_NEW', payload);
   });
 
   socket.on('AUTHENTICATED', (payload) => {
-
+    console.log('joined the room');
+    socket.join(payload.user.Username);
+    socketSays.emit('MAIN', payload);
+  });
     // takes in payload, defines player-specific room, joins the socket to that room, emits MAIN with player-specific payload:
     let clientRoom = payload.user.Username;
     console.log(`${clientRoom} joined the ${clientRoom} room`);
@@ -125,8 +78,8 @@ socketSays.on('connection', (socket) => {
     socketSays.to(clientRoom).emit('MAIN', payload);
   });
 
-  socket.on('RETURN_TO_MAIN', (payload) => {
-    socketSays.to(payload.user.Username).emit('MAIN', payload);
+  socket.on('CORRECT', (payload) => {
+    socketSays.emit('NEXT_SEQUENCE', payload);
   });
 
   socket.on('PLAY_GAME', (payload) => {
@@ -150,5 +103,5 @@ socketSays.on('connection', (socket) => {
     // emits NEXT_SEQUENCE to that player's room, with player-specific payload
     socketSays.to(payload.user.Username).emit('LOST', payload);
   });
-
+  
 });
