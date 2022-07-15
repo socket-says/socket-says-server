@@ -53,6 +53,7 @@ socketSays.on('connection', (socket) => {
     try {
       let player = await PlayerData.findOne({ Username });
       if (player !== null) {
+        console.log('EXISTING PLAYER: ', player);
         socketSays.to(payload.user.socketId).emit('PLAYER_EXISTS', payload);
       } else if (player === null) {
         socketSays.to(payload.user.socketId).emit('NEW_PLAYER', payload);
@@ -69,6 +70,8 @@ socketSays.on('connection', (socket) => {
       let valid = await bcrypt.compare(payload.user.Password, foundUser.Password);
       if (valid) {
         socketSays.to(payload.user.socketId).emit('HANDOFF', payload);
+      } else {
+        socketSays.to(payload.user.socketId).emit('PLAYER_EXISTS', payload);
       }
     } catch (e) {
       console.log(e.message);
@@ -77,7 +80,8 @@ socketSays.on('connection', (socket) => {
 
   socket.on('CREATE', async (payload) => {
     let { Username, Password, Highscore } = payload.user;
-    await PlayerData.create({ Username, Password, Highscore });
+    let newPlayer = await PlayerData.create({ Username, Password, Highscore });
+    console.log('NEW PLAYER CREATED: ', newPlayer);
     socketSays.to(payload.user.socketId).emit('CREATED_NEW', payload);
   });
 
@@ -92,6 +96,7 @@ socketSays.on('connection', (socket) => {
 
   socket.on('PLAY_GAME', (payload) => {
     socketSays.to(payload.user.socketId).emit('START', payload);
+    socketSays.emit('PLAYER_STARTED', payload);
   });
 
   socket.on('VIEW_HIGH_SCORES', (payload) => {
