@@ -44,16 +44,19 @@ const socketSays = server.of('/socket-says');
 
 socketSays.on('connection', (socket) => {
   console.log('Socket connected to Event Server', socket.id);
-  socketSays.emit('LOG_IN');
+  console.log(`${socket.id} joined the ${socket.id} room`);
+  socket.join(socket.id);
+  socketSays.to(socket.id).emit('LOG_IN', socket.id);
 
   socket.on('CHECK_USERNAME', async (payload) => {
     let { Username } = payload.user;
     try {
       let player = await PlayerData.findOne({ Username });
+      console.log('checked username payload: ', payload);
       if (player !== null) {
-        socketSays.emit('PLAYER_EXISTS', payload);
+        socketSays.to(payload.user.socketId).emit('PLAYER_EXISTS', payload);
       } else if (player === null) {
-        socketSays.emit('NEW_PLAYER', payload);
+        socketSays.to(payload.user.socketId).emit('NEW_PLAYER', payload);
       }
     } catch (e) {
       console.log(e.message);
@@ -66,7 +69,7 @@ socketSays.on('connection', (socket) => {
       let foundUser = await PlayerData.findOne({ Username });
       let valid = await bcrypt.compare(payload.user.Password, foundUser.Password);
       if (valid) {
-        socketSays.emit('HANDOFF', payload);
+        socketSays.to(payload.user.socketId).emit('HANDOFF', payload);
       }
     } catch (e) {
       console.log(e.message);
@@ -76,32 +79,40 @@ socketSays.on('connection', (socket) => {
   socket.on('CREATE', async (payload) => {
     let { Username, Password, Highscore } = payload.user;
     await PlayerData.create({ Username, Password, Highscore });
-    socketSays.emit('CREATED_NEW', payload);
+    socketSays.to(payload.user.socketId).emit('CREATED_NEW', payload);
   });
 
   socket.on('AUTHENTICATED', (payload) => {
-    console.log(`${payload.user.Username} joined the ${payload.user.Username} room`);
-    socket.join(payload.user.Username);
-    socketSays.to(payload.user.Username).emit('MAIN', payload);
+    socketSays.to(payload.user.socketId).emit('MAIN', payload);
+    socketSays.emit('PLAYER_JOINED', payload);
   });
 
   socket.on('RETURN_TO_MAIN', (payload) => {
-    socketSays.to(payload.user.Username).emit('MAIN', payload);
+    socketSays.to(payload.user.socketId).emit('MAIN', payload);
   });
 
   socket.on('PLAY_GAME', (payload) => {
-    socketSays.to(payload.user.Username).emit('START', payload);
+    socketSays.to(payload.user.socketId).emit('START', payload);
   });
 
   socket.on('VIEW_HIGH_SCORES', (payload) => {
-    socketSays.to(payload.user.Username).emit('DISPLAY_HIGH_SCORES', payload);
+    socketSays.to(payload.user.socketId).emit('DISPLAY_HIGH_SCORES', payload);
   });
 
   socket.on('CORRECT', (payload) => {
-    socketSays.to(payload.user.Username).emit('NEXT_SEQUENCE', payload);
+    socketSays.to(payload.user.socketId).emit('NEXT_SEQUENCE', payload);
+    socketSays.emit('PLAYER_WON', payload);
   });
   socket.on('INCORRECT', (payload) => {
-    socketSays.to(payload.user.Username).emit('LOST', payload);
+    socketSays.to(payload.user.socketId).emit('LOST', payload);
+    socketSays.emit('PLAYER_LOST', payload);
   });
 
 });
+
+module.exports = {
+  server,
+  socketSays,
+};
+
+
