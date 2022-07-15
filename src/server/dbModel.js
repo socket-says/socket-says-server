@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
 const newPlayer = new Schema({
+
   Username: {
     type: String,
     require: true,
