@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
 const newPlayer = new Schema({
+
   Username: {
     type: String,
     require: true,
@@ -21,7 +22,4 @@ const newPlayer = new Schema({
 
 const playerModel = mongoose.model('player', newPlayer);
 
-module.exports = {
-  playerModel,
-  mongoose
-}
+module.exports = playerModel;
