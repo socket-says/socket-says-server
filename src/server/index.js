@@ -92,9 +92,7 @@ socketSays.on('connection', (socket) => {
   });
 
   socket.on('PLAY_GAME', (payload) => {
-
     socketSays.to(payload.user.socketId).emit('START', payload);
-
   });
 
   socket.on('VIEW_HIGH_SCORES', (payload) => {
@@ -103,9 +101,11 @@ socketSays.on('connection', (socket) => {
 
   socket.on('CORRECT', (payload) => {
     socketSays.to(payload.user.socketId).emit('NEXT_SEQUENCE', payload);
+    socketSays.emit('PLAYER_WON', payload);
   });
   socket.on('INCORRECT', (payload) => {
     socketSays.to(payload.user.socketId).emit('LOST', payload);
+    socketSays.emit('PLAYER_LOST', payload);
   });
 
 });
