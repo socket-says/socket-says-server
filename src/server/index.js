@@ -22,20 +22,6 @@ app.get('/', (req, res) => {
   console.log('Welcome to the \'Socket-says\' server');
 });
 
-// ---------------testing-----------------
-async function postPlayerData(req, res, next) {
-  try {
-    let player = req.body;
-    let response = await PlayerData.create(player);
-    res.status(200).send(response);
-  } catch(err) {
-    next(err);
-  }
-};
-
-app.post('/playerData', postPlayerData);
-// ---------------testing-----------------
-
 app.get('*', (req, res) => {
   res.status(404).send('Not available');
 });
@@ -89,48 +75,33 @@ socketSays.on('connection', (socket) => {
 
   socket.on('CREATE', async (payload) => {
     let { Username, Password, Highscore } = payload.user;
-    let newPlayer = await PlayerData.create({ Username, Password, Highscore });
+    await PlayerData.create({ Username, Password, Highscore });
     socketSays.emit('CREATED_NEW', payload);
   });
 
   socket.on('AUTHENTICATED', (payload) => {
-    console.log('joined the room');
+    console.log(`${payload.user.Username} joined the ${payload.user.Username} room`);
     socket.join(payload.user.Username);
-    socketSays.emit('MAIN', payload);
+    socketSays.to(payload.user.Username).emit('MAIN', payload);
   });
-  // takes in payload, defines player-specific room, joins the socket to that room, emits MAIN with player-specific payload:
-  let clientRoom = payload.user.Username;
-  console.log(`${clientRoom} joined the ${clientRoom} room`);
-  socket.join(clientRoom);
-  console.log('Authenticated payload', payload);
-  socketSays.to(clientRoom).emit('MAIN', payload);
-});
 
-socket.on('CORRECT', (payload) => {
-  socketSays.emit('NEXT_SEQUENCE', payload);
-});
+  socket.on('RETURN_TO_MAIN', (payload) => {
+    socketSays.to(payload.user.Username).emit('MAIN', payload);
+  });
 
-socket.on('PLAY_GAME', (payload) => {
-  // takes in player-specific payload
-  // emits START to that player's room, with player-specific payload
-  socketSays.to(payload.user.Username).emit('START', payload);
-});
+  socket.on('PLAY_GAME', (payload) => {
+    socketSays.to(payload.user.Username).emit('START', payload);
+  });
 
-socket.on('VIEW_HIGH_SCORES', (payload) => {
-  socketSays.to(payload.user.Username).emit('DISPLAY_HIGH_SCORES', payload);
-});
+  socket.on('VIEW_HIGH_SCORES', (payload) => {
+    socketSays.to(payload.user.Username).emit('DISPLAY_HIGH_SCORES', payload);
+  });
 
-socket.on('CORRECT', (payload) => {
-  // takes in player-specific payload
-  // emits NEXT_SEQUENCE to that player's room, with player-specific payload
-  // console.log('server received correct');
-  socketSays.to(payload.user.Username).emit('NEXT_SEQUENCE', payload);
-});
-socket.on('INCORRECT', (payload) => {
-  // takes in player-specific payload
-  // emits NEXT_SEQUENCE to that player's room, with player-specific payload
-  socketSays.to(payload.user.Username).emit('LOST', payload);
-});
+  socket.on('CORRECT', (payload) => {
+    socketSays.to(payload.user.Username).emit('NEXT_SEQUENCE', payload);
+  });
+  socket.on('INCORRECT', (payload) => {
+    socketSays.to(payload.user.Username).emit('LOST', payload);
+  });
 
-
-module.exports = { Server: socketSays }
+});
