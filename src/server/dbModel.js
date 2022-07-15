@@ -21,4 +21,7 @@ const newPlayer = new Schema({
 
 const playerModel = mongoose.model('player', newPlayer);
 
-module.exports = playerModel;
+module.exports = {
+  playerModel,
+  mongoose
+}
