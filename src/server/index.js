@@ -52,7 +52,6 @@ socketSays.on('connection', (socket) => {
     let { Username } = payload.user;
     try {
       let player = await PlayerData.findOne({ Username });
-      console.log('checked username payload: ', payload);
       if (player !== null) {
         socketSays.to(payload.user.socketId).emit('PLAYER_EXISTS', payload);
       } else if (player === null) {
